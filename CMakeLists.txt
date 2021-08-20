@@ -27,6 +27,8 @@ target_include_directories(
     rediscpp_rediscpp ${rediscpp_warning_guard}
     INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+    INTERFACE
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>"
 )
 
 target_compile_features(rediscpp_rediscpp INTERFACE cxx_std_20)

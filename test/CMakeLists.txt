@@ -9,7 +9,13 @@ if(PROJECT_IS_TOP_LEVEL)
   find_package(rediscpp REQUIRED)
   enable_testing()
 endif()
-
+include(FetchContent)
+FetchContent_Declare(
+  doctest
+  GIT_REPOSITORY https://github.com/onqtam/doctest.git
+  GIT_TAG 2.4.6
+)
+FetchContent_MakeAvailable(doctest)
 add_executable(rediscpp_test source/rediscpp_test.cpp)
 target_link_libraries(rediscpp_test PRIVATE rediscpp::rediscpp)
 target_compile_features(rediscpp_test PRIVATE cxx_std_20)
