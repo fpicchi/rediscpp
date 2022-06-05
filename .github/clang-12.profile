@@ -6,5 +6,5 @@ compiler.libcxx=libstdc++11
 compiler.version=12
 os=Linux
 [env]
-CC=/usr/bin/clang
-CXX=/usr/bin/clang++
+CC=/usr/bin/clang-12
+CXX=/usr/bin/clang++-12
