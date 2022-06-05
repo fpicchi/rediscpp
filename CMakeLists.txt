@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-include(cmake/in-source-guard.cmake)
+include(cmake/prelude.cmake)
 
 project(
     rediscpp
@@ -24,19 +24,29 @@ set_property(
 )
 
 target_include_directories(
-    rediscpp_rediscpp ${rediscpp_warning_guard}
+    rediscpp_rediscpp ${warning_guard}
     INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-    INTERFACE
-    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>"
 )
 
-target_compile_features(rediscpp_rediscpp INTERFACE cxx_std_20)
+target_compile_features(rediscpp_rediscpp INTERFACE cxx_std_17)
+
+find_package(fmt REQUIRED)
+target_link_libraries(rediscpp_rediscpp INTERFACE fmt::fmt)
 
 # ---- Install rules ----
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
+endif()
+
+# ---- Examples ----
+
+if(PROJECT_IS_TOP_LEVEL)
+  option(BUILD_EXAMPLES "Build examples tree." "${rediscpp_DEVELOPER_MODE}")
+  if(BUILD_EXAMPLES)
+    add_subdirectory(example)
+  endif()
 endif()
 
 # ---- Developer mode ----

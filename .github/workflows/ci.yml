@@ -23,7 +23,7 @@ jobs:
       run: pip3 install codespell
 
     - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format-11 -P cmake/lint.cmake
+      run: cmake -D FORMAT_COMMAND=clang-format-12 -P cmake/lint.cmake
 
     - name: Spell check
       if: always()
@@ -34,10 +34,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # To enable coverage, go to https://codecov.io/, acquire a token, put it
-    # into your secrets (Settings > Secrets > New repository secret), delete
-    # the last line from the conditional below and edit the "<name>"
-    # placeholder to your GitHub name.
+    # To enable coverage, delete the last line from the conditional below and
+    # edit the "<name>" placeholder to your GitHub name.
     # If you do not wish to use codecov, then simply delete this job from the
     # workflow.
     if: github.repository_owner == 'fpicchi'
@@ -48,6 +46,16 @@ jobs:
     - name: Install LCov
       run: sudo apt-get update -q
         && sudo apt-get install lcov -q -y
+
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with: { python-version: "3.8" }
+
+    - name: Install dependencies
+      run: pip3 install "conan<2"
+        && conan profile new default --detect
+        && conan profile update settings.compiler.libcxx=libstdc++11 default
+        && conan install . -b missing
 
     - name: Configure
       run: cmake --preset=ci-coverage
@@ -75,8 +83,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with: { python-version: "3.8" }
+
+    - name: Install dependencies
+      run: pip3 install "conan<2"
+        && conan profile new default --detect
+        && cp .github/clang-12.profile ~/.conan/profiles/default
+        && conan install . -b missing
+
     - name: Configure
-      env: { CXX: clang++-11 }
+      env: { CXX: clang++-12 }
       run: cmake --preset=ci-sanitize
 
     - name: Build
@@ -98,19 +116,34 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos, ubuntu, windows]
+        os: [macos-latest, ubuntu-latest, windows-2022]
 
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Install static analyzers
-      if: matrix.os == 'ubuntu'
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install clang-tidy cppcheck -y -q
 
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with: { python-version: "3.8" }
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip3 install "conan<2"
+        conan profile new default --detect
+        if [ ${{ matrix.os }} = ubuntu-latest ]; then
+          conan profile update settings.compiler.libcxx=libstdc++11 default
+        fi
+        conan install . -b missing
+
     - name: Configure
-      run: cmake --preset=ci-${{ matrix.os }}
+      shell: pwsh
+      run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
 
     - name: Build
       run: cmake --build build --config Release -j 2
@@ -141,7 +174,8 @@ jobs:
     # simply delete this job similarly to the coverage one.
     if: github.ref == 'refs/heads/master'
       && github.event_name == 'push'
-      && github.repository_owner == 'fpicchi'
+      && github.repository_owner == '<name>'
+      && false
 
     steps:
     - uses: actions/checkout@v2
@@ -157,7 +191,8 @@ jobs:
         && sudo apt-get install doxygen -q -y
 
     - name: Build docs
-      run: cmake -P cmake/docs.cmake
+      run: cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
+        -P cmake/docs-ci.cmake
 
     - name: Deploy docs
       uses: peaceiris/actions-gh-pages@v3

@@ -1,7 +1,8 @@
-#include <rediscpp/rediscpp.hpp>
+#include "rediscpp/rediscpp.hpp"
 
-auto main() -> int
+#include <catch2/catch.hpp>
+
+TEST_CASE("Name is rediscpp", "[library]")
 {
-  auto result = name();
-  return result == "rediscpp" ? 0 : 1;
+  REQUIRE(name() == "rediscpp");
 }
